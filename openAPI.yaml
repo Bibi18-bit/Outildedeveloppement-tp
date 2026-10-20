@@ -130,7 +130,37 @@ paths:
         schema:
           type: integer
           example: 1
-
+get:
+      summary: Récupérer la collection enfant (les critiques d'un livre)
+      description: Permet de lister les critiques associées à un livre spécifique avec pagination.
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Succès, retourne la liste des critiques.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Review'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
 components:
   securitySchemes:
