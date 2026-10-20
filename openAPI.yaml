@@ -1,0 +1,207 @@
+openapi: 3.1.0
+info:
+  title: API de Gestion de Livres
+  version: 1.0.0
+  description: Une API RESTful pour gérer une collection de livres et leurs critiques, documentée avec OpenAPI.
+servers:
+  - url: http://localhost:8080/v1
+paths:
+  /books:
+    get:
+      summary: Récupérer la collection des livres
+      description: Permet de lister les livres avec pagination et filtrage optionnel par auteur (`created-by`).
+      parameters:
+        - name: limit
+          in: query
+          description: Nombre maximum d'éléments à retourner
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: offset
+          in: query
+          description: Nombre d'éléments à ignorer pour la pagination
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: created-by
+          in: query
+          description: Filtrer les livres par créateur / auteur
+          required: false
+          schema:
+            type: string
+            example: "Jean Dupont"
+      responses:
+        '200':
+          description: Succès de la requête, retourne la liste des livres.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Book'
+                  count:
+                    type: integer
+                    example: 5
+        '400':
+          $ref: '#/components/responses/BadRequest'
+    post:
+      summary: Ajouter un nouveau livre
+      description: Crée un nouveau livre dans la collection. Nécessite une authentification.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookInput'
+      responses:
+        '201':
+          description: Livre créé avec succès.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /books/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Identifiant unique du livre
+        schema:
+          type: integer
+          example: 1
+    put:
+      summary: Modifier un livre existant
+      description: Met à jour les informations d'un livre. Nécessite une authentification.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookInput'
+      responses:
+        '200':
+          description: Livre modifié avec succès.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Supprimer un livre
+      description: Supprime un livre de la collection. Nécessite une authentification.
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Livre supprimé avec succès (aucun contenu retourné).
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /books/{id}/reviews:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Identifiant unique du livre parent
+        schema:
+          type: integer
+          example: 1
+
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Requête invalide (paramètres ou corps incorrects).
+    Unauthorized:
+      description: Non authentifié (Token JWT manquant ou invalide).
+    NotFound:
+      description: Ressource non trouvée.
+
+  schemas:
+    BookInput:
+      type: object
+      required:
+        - title
+        - price
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: "Les Misérables"
+        price:
+          type: number
+          minimum: 0.01
+          maximum: 1000.0
+          example: 19.99
+        created-by:
+          type: string
+          example: "Jean Dupont"
+
+    Book:
+      allOf:
+        - $ref: '#/components/schemas/BookInput'
+        - type: object
+          required:
+            - id
+            - created-at
+          properties:
+            id:
+              type: integer
+              example: 1
+            created-at:
+              type: string
+              format: date-time
+              example: "2026-10-01T12:00:00Z"
+
+    Review:
+      type: object
+      required:
+        - id
+        - rating
+        - comment
+      properties:
+        id:
+          type: integer
+          example: 101
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        comment:
+          type: string
+          maxLength: 500
+          example: "Un chef-d'œuvre absolu !"
+
+    
