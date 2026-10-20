@@ -1,0 +1,23 @@
+name: OpenAPI Lint
+
+on:
+  push:
+    branches: [ "**" ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupération du code (Checkout)
+        uses: actions/checkout@v4
+
+      - name: Configuration de l'écosystème Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Installation de Redocly CLI
+        run: npm install -g @redocly/cli
+
+      - name: Vérification du fichier OpenAPI (Lint)
+        run: redocly lint src/openAPI.yaml
